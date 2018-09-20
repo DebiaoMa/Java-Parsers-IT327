@@ -156,7 +156,10 @@ public class LL1 {
 				System.out.println("Found ) at index " + curr);
 				curr++;
 				return n;
-			}else {
+			}else if(tokens[curr] == '('){
+				curr++;
+				return n + parseF();		// this may be a problem
+			}else{
 				printErrorAndExit(2);
 				return n;
 			}
@@ -169,6 +172,7 @@ public class LL1 {
 				while(!numberIsOver && tokens.length > i){
 					if(Character.isDigit(tokens[i])){
 							fullNumber += tokens[i];
+							curr++;
 							System.out.println(fullNumber);
 					}else{
 						numberIsOver = true;
@@ -176,7 +180,7 @@ public class LL1 {
 					i++;
 				}
 				System.out.println("Found " + fullNumber + " at index " + curr);
-				curr++;
+				System.out.println("tokens[curr] = " + tokens[curr]);
 				return Integer.parseInt(fullNumber);
 			} else{
 				printErrorAndExit(0);
@@ -202,16 +206,12 @@ public class LL1 {
 			break;
 		case 2:
 			System.out.println("Must close parentheses.");
+			break;
 		default: 
 			System.out.println("Invalid input. Problem cannot be parsed.");
 			break;
 		}
 		System.out.println("Exiting.");
 		System.exit(-1);
-	}
-	
-	public static void printResultAndExit(int n){
-		System.out.println("Success! Answer = " + n);
-		System.exit(0);
 	}
 }
