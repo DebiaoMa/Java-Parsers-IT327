@@ -48,7 +48,8 @@ public class LL1 {
 			System.out.println("Failure! Input is invalid.");
 		}
 		
-		// TODO: build parsing tree, solve problem
+		// If all goes well in parsing, you should have a stack for numbers and operators here.
+		// TODO: build parsing tree, solve problem, print answer
 	}
 	
 	/**
@@ -75,7 +76,7 @@ public class LL1 {
 		}else if(temp == '$' || temp == ')'){
 			// TODO: should anything go here? probably not.
 		}else {
-			// TODO: failure
+			printErrorAndExit(0);
 		}
 	}
 	
@@ -114,10 +115,23 @@ public class LL1 {
 			if(tokens[curr] == ')') {
 				curr++;
 			}else {
-				// TODO: failure
+				printErrorAndExit(0);
 			}
-		}else if(Character.isDigit(temp)) { // TODO: should this be "if temp is a number"?
-			numbers.push(Integer.parseInt(""+temp));
+		}else if(Character.isDigit(temp)) {
+			/* The following code checks concurrent symbols to make sure the full number is parsed
+			 * rather than only its leftmost digit.
+			 */
+			bool numberIsOver = false;
+			String fullNumber = "" + temp;
+			while(!numberIsOver) {
+				int n = 1;
+				if(Character.isDigit(tokens[curr+n]){
+					fullNumber += tokens[curr+n]);
+				}else {
+					numberIsOver = true;
+				}
+			}
+			numbers.push(Integer.parseInt(fullNumber));
 			curr++;
 		}
 	}
@@ -129,13 +143,14 @@ public class LL1 {
 	 * @param errorNumber
 	 */
 	private static void printErrorAndExit(int errorNumber) {
+		System.out.println("Error!");
 		switch(errorNumber) {
 		case 1:
 			System.out.println("You must pass an argument into this program.\nExample: java LL1 100-((2*(5-3))-2)+3");
-		default:
-			System.out.println("Error. Exiting.\n");
-			System.exit(-1);
-			break;
+		case 2: 
+			System.out.println("Invalid input. Problem cannot be parsed.")
 		}
+		System.out.println("Exiting.");
+		System.exit(-1);
 	}
 }
