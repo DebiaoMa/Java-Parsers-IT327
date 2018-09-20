@@ -11,11 +11,11 @@ public class LL1 {
 	private static int curr;		// current index in tokens
 	
 	/* Grammar:
-	 * E	-> TE'
-	 * E'	-> +TE' | -TE' | lambda
-	 * T	-> FT'
-	 * T'	-> *FT' | /FT' | lambda
-	 * F	-> (E) 	| n
+	 * E 	-> TE'
+	 * E' 	-> +TE' | -TE' | lambda
+	 * T 	-> FT'
+	 * T' 	-> *FT' | /FT' | lambda
+	 * F 	-> (E) 	| n
 	 */
 
 	public static void main(String[] args) {	
@@ -24,31 +24,31 @@ public class LL1 {
 		
 		/**
 		 * Ends program if there are no args. 
-		 * If there are, it adds an end token ($) 
+		 * If there are, it adds an end symbol ($) 
 		 * and creates a char[] array from args[0].
-		 */
+		 */		
 		if(args.length == 0) {
 			printErrorAndExit(1);
 		}else {
             String temp = args[0];
             temp = temp.replaceAll("\"", "");	// removes quotation marks
-            temp = temp + "$";					// adds end token
-			tokens = temp.toCharArray();		// turns input into char[]
+            temp = temp + "$";				// adds end symbol
+			tokens = temp.toCharArray();	// turns input into char[]
 		}
-		System.out.println("1");
+
 		int answer = parseE();	// begins recursion
 		
-		// double-checks to make sure the end token was actually reached.
+		// double-checks to make sure the end symbol was actually reached
 		if(tokens[curr] == '$') {
 			System.out.println("Success! Input is valid. Answer: " + answer);
 		}else {
-			printErrorAndExit(0);
+			System.out.println("Failure! Input is invalid.");
 		}
 	}
 	
 	/**
 	 * E -> TE'
-	 * Starting token.
+	 * Starting symbol.
 	 */
 	private static int parseE() {
 		int n = parseT();
@@ -63,23 +63,22 @@ public class LL1 {
 	private static int parseEPrime(int n) {
 		
 		char temp = tokens[curr];
-		int numT = 0;
+		int n2 = 0;
 		
 		switch(temp){
 		case '+':
 			curr++;
-			numT = parseT();
-			return parseEPrime(n + numT);
+			n2 = parseT();
+			return parseEPrime(n + n2);
 		case '-':
 			curr++;
-			numT = parseT();
-			return parseEPrime(n - numT);
+			n2 = parseT();
+			return parseEPrime(n - n2);
 		case '$':
 		case ')':
 			return n;
 		default:
-			System.out.println("2");
-			printErrorAndExit(0);
+			printErrorAndExit();
 			return n;
 		}
 	}
@@ -89,7 +88,7 @@ public class LL1 {
 	 */
 	private static int parseT() {
 		int n = parseF();
-		return parseTPrime(parseF());
+		return parseTPrime(n);
 	}
 	
 	/**
@@ -100,50 +99,48 @@ public class LL1 {
 	private static int parseTPrime(int n) {
 		
 		char temp = tokens[curr];
-		int numF = 0;
+		int n2 = 0;
 		
 		switch(temp){
 		case '*':
 			curr++;
-			numF = parseF();
-			return parseTPrime(n * numF);
+			n2 = parseF();
+			return parseTPrime(n * n2);
 		case '/':
 			curr++;
-			numF = parseF();
-			return parseTPrime(n / numF);
+			n2 = parseF();
+			return parseTPrime(n / n2);
 		case '+':
 		case '-':
 		case ')':
 		case '$':
 			break;
 		default:
-			System.out.println("3");
-			printErrorAndExit(0);
+			printErrorAndExit();
 		}
 		return n;
 	}
 	
 	/**
 	 * F -> (E) | n
-	 * Parses tokens within () or parses a number.
 	 */
 	private static int parseF() {
 		
 		char temp = tokens[curr];
-		int numE;
+		int n, n2;
 		
 		if(temp == '(') {
 			curr++;
-			numE = parseE();
+			n = parseE();
 			if(tokens[curr] == ')') {
 				curr++;
-				return numE;
+				return n;
 			}else if(tokens[curr] == '('){	// if there are multiple parentheses in a row
-				curr++;						// this continues the recursive parsing
-				return numE + parseF();
+				curr++;
+				return n + parseF();		// this continues the recursive parsing
 			}else{
 				printErrorAndExit(2);
-				return numE;
+				return n;
 			}
 		} else {	// continues parsing the int until interrupted by a non-number
 			if(Character.isDigit(temp)){
@@ -160,9 +157,8 @@ public class LL1 {
 					i++;
 				}
 				return Integer.parseInt(fullNumber);
-			} else{		// occurs if token is neither ( nor an int
-				System.out.println("4");
-				printErrorAndExit(0);
+			} else{		// occurs if the symbol is neither ( nor an int
+				printErrorAndExit();
 			}
 		}
 		return -1;
@@ -185,7 +181,7 @@ public class LL1 {
 					"\nExample: java LL1 100-((2*(5-3))-2)+3");
 			break;
 		case 2:
-			System.out.println("You must close parentheses.");
+			System.out.println("Must close parentheses.");
 			break;
 		default: 
 			System.out.println("Invalid input. Problem cannot be parsed.");
@@ -193,5 +189,13 @@ public class LL1 {
 		}
 		System.out.println("Exiting.");
 		System.exit(-1);
+	}
+	
+	/*
+	 * No-args version of printErrorAndExit.
+	 * Prints a default error message and exits the program.
+	 */
+	private static void printErrorAndExit(){
+		printErrorAndExit(0);
 	}
 }
