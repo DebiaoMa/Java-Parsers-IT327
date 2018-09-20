@@ -1,9 +1,9 @@
 /**
  * @author Jerry Binder jmbind1@ilstu.edu
  * 
- * Recursive-descent parser using a given LL(1) parsing table
+ * Recursive-descent parser using a given LL(1) parsing table.
  * All code is property of Jerry Binder.
- * Grammar provided by Dr Chung-Chih Li
+ * Grammar provided by Dr Chung-Chih Li.
  */
 
 public class LL1 {
@@ -11,43 +11,44 @@ public class LL1 {
 	private static int curr;		// current index in tokens
 	
 	/* Grammar:
-	 * E -> TE'
-	 * E' -> +TE' | -TE' | lambda
-	 * T -> FT'
-	 * T' -> *FT' | /FT' | lambda
-	 * F -> (E) | n
-	 * 
-	 * E = expression
-	 * T = term
-	 * F = factor
-	 * lambda = empty string
+	 * E	-> TE'
+	 * E'	-> +TE' | -TE' | lambda
+	 * T	-> FT'
+	 * T'	-> *FT' | /FT' | lambda
+	 * F	-> (E) 	| n
 	 */
 
 	public static void main(String[] args) {	
 		// Declarations
 		curr = 0;
 		
-		// Ends program if there are no args.		
+		/**
+		 * Ends program if there are no args. 
+		 * If there are, it adds an end token ($) 
+		 * and creates a char[] array from args[0].
+		 */
 		if(args.length == 0) {
 			printErrorAndExit(1);
 		}else {
             String temp = args[0];
-            temp = temp.replaceAll("\"", "");	// removes quotation marks if present
-            temp = temp + "$";
-			tokens = temp.toCharArray();
+            temp = temp.replaceAll("\"", "");	// removes quotation marks
+            temp = temp + "$";					// adds end token
+			tokens = temp.toCharArray();		// turns input into char[]
 		}
-
-		int answer = parseE();
+		System.out.println("1");
+		int answer = parseE();	// begins recursion
 		
+		// double-checks to make sure the end token was actually reached.
 		if(tokens[curr] == '$') {
 			System.out.println("Success! Input is valid. Answer: " + answer);
 		}else {
-			System.out.println("Failure! Input is invalid.");
+			printErrorAndExit(0);
 		}
 	}
 	
 	/**
 	 * E -> TE'
+	 * Starting token.
 	 */
 	private static int parseE() {
 		int n = parseT();
@@ -56,25 +57,28 @@ public class LL1 {
 	
 	/**
 	 * E' -> +TE' | -TE' | lambda
+	 * Parses addition or subtraction.
+	 * @param int n - number passed through from ParseT()
 	 */
 	private static int parseEPrime(int n) {
 		
 		char temp = tokens[curr];
+		int numT = 0;
 		
-		int n2 = 0;
 		switch(temp){
 		case '+':
 			curr++;
-			n2 = parseT();
-			return parseEPrime(n + n2);
+			numT = parseT();
+			return parseEPrime(n + numT);
 		case '-':
 			curr++;
-			n2 = parseT();
-			return parseEPrime(n - n2);
+			numT = parseT();
+			return parseEPrime(n - numT);
 		case '$':
 		case ')':
 			return n;
 		default:
+			System.out.println("2");
 			printErrorAndExit(0);
 			return n;
 		}
@@ -85,32 +89,35 @@ public class LL1 {
 	 */
 	private static int parseT() {
 		int n = parseF();
-		return parseTPrime(n);
+		return parseTPrime(parseF());
 	}
 	
 	/**
 	 * T' -> *FT' | /FT' | lambda
+	 * Parses multiplication or division.
+	 * @param int n - number passed through from ParseF()
 	 */
 	private static int parseTPrime(int n) {
 		
 		char temp = tokens[curr];
+		int numF = 0;
 		
-		int n2 = 0;
 		switch(temp){
 		case '*':
 			curr++;
-			n2 = parseF();
-			return parseTPrime(n * n2);
+			numF = parseF();
+			return parseTPrime(n * numF);
 		case '/':
 			curr++;
-			n2 = parseF();
-			return parseTPrime(n / n2);
+			numF = parseF();
+			return parseTPrime(n / numF);
 		case '+':
 		case '-':
 		case ')':
 		case '$':
 			break;
 		default:
+			System.out.println("3");
 			printErrorAndExit(0);
 		}
 		return n;
@@ -118,25 +125,27 @@ public class LL1 {
 	
 	/**
 	 * F -> (E) | n
+	 * Parses tokens within () or parses a number.
 	 */
 	private static int parseF() {
-		char temp = tokens[curr];
 		
-		int n, n2;
+		char temp = tokens[curr];
+		int numE;
+		
 		if(temp == '(') {
 			curr++;
-			n = parseE();
+			numE = parseE();
 			if(tokens[curr] == ')') {
 				curr++;
-				return n;
-			}else if(tokens[curr] == '('){
-				curr++;
-				return n + parseF();		// this may be a problem
+				return numE;
+			}else if(tokens[curr] == '('){	// if there are multiple parentheses in a row
+				curr++;						// this continues the recursive parsing
+				return numE + parseF();
 			}else{
 				printErrorAndExit(2);
-				return n;
+				return numE;
 			}
-		} else {
+		} else {	// continues parsing the int until interrupted by a non-number
 			if(Character.isDigit(temp)){
 				boolean numberIsOver = false;
 				String fullNumber = "";
@@ -151,7 +160,8 @@ public class LL1 {
 					i++;
 				}
 				return Integer.parseInt(fullNumber);
-			} else{
+			} else{		// occurs if token is neither ( nor an int
+				System.out.println("4");
 				printErrorAndExit(0);
 			}
 		}
@@ -171,10 +181,11 @@ public class LL1 {
 		System.out.println("Error!");
 		switch(errorNumber) {
 		case 1:
-			System.out.println("You must pass an argument into this program.\nExample: java LL1 100-((2*(5-3))-2)+3");
+			System.out.println("You must pass an argument into this program." +
+					"\nExample: java LL1 100-((2*(5-3))-2)+3");
 			break;
 		case 2:
-			System.out.println("Must close parentheses.");
+			System.out.println("You must close parentheses.");
 			break;
 		default: 
 			System.out.println("Invalid input. Problem cannot be parsed.");
