@@ -1,9 +1,9 @@
 /**
  * @author Jerry Binder jmbind1@ilstu.edu
  * 
- * Recursive-descent parser using a given LL(1) parsing table
+ * Recursive-descent parser using a given LL(1) parsing table.
  * All code is property of Jerry Binder.
- * Grammar provided by Dr Chung-Chih Li
+ * Grammar provided by Dr Chung-Chih Li.
  */
 
 public class LL1 {
@@ -11,34 +11,34 @@ public class LL1 {
 	private static int curr;		// current index in tokens
 	
 	/* Grammar:
-	 * E -> TE'
-	 * E' -> +TE' | -TE' | lambda
-	 * T -> FT'
-	 * T' -> *FT' | /FT' | lambda
-	 * F -> (E) | n
-	 * 
-	 * E = expression
-	 * T = term
-	 * F = factor
-	 * lambda = empty string
+	 * E 	-> TE'
+	 * E' 	-> +TE' | -TE' | lambda
+	 * T 	-> FT'
+	 * T' 	-> *FT' | /FT' | lambda
+	 * F 	-> (E) 	| n
 	 */
 
 	public static void main(String[] args) {	
 		// Declarations
 		curr = 0;
 		
-		// Ends program if there are no args.		
+		/**
+		 * Ends program if there are no args. 
+		 * If there are, it adds an end symbol ($) 
+		 * and creates a char[] array from args[0].
+		 */		
 		if(args.length == 0) {
 			printErrorAndExit(1);
 		}else {
             String temp = args[0];
-            temp = temp.replaceAll("\"", "");	// removes quotation marks if present
-            temp = temp + "$";
-			tokens = temp.toCharArray();
+            temp = temp.replaceAll("\"", "");	// removes quotation marks
+            temp = temp + "$";				// adds end symbol
+			tokens = temp.toCharArray();	// turns input into char[]
 		}
 
-		int answer = parseE();
+		int answer = parseE();	// begins recursion
 		
+		// double-checks to make sure the end symbol was actually reached
 		if(tokens[curr] == '$') {
 			System.out.println("Success! Input is valid. Answer: " + answer);
 		}else {
@@ -48,6 +48,7 @@ public class LL1 {
 	
 	/**
 	 * E -> TE'
+	 * Starting symbol.
 	 */
 	private static int parseE() {
 		int n = parseT();
@@ -56,12 +57,14 @@ public class LL1 {
 	
 	/**
 	 * E' -> +TE' | -TE' | lambda
+	 * Parses addition or subtraction.
+	 * @param int n - number passed through from ParseT()
 	 */
 	private static int parseEPrime(int n) {
 		
 		char temp = tokens[curr];
-		
 		int n2 = 0;
+		
 		switch(temp){
 		case '+':
 			curr++;
@@ -75,7 +78,7 @@ public class LL1 {
 		case ')':
 			return n;
 		default:
-			printErrorAndExit(0);
+			printErrorAndExit();
 			return n;
 		}
 	}
@@ -90,12 +93,14 @@ public class LL1 {
 	
 	/**
 	 * T' -> *FT' | /FT' | lambda
+	 * Parses multiplication or division.
+	 * @param int n - number passed through from ParseF()
 	 */
 	private static int parseTPrime(int n) {
 		
 		char temp = tokens[curr];
-		
 		int n2 = 0;
+		
 		switch(temp){
 		case '*':
 			curr++;
@@ -111,7 +116,7 @@ public class LL1 {
 		case '$':
 			break;
 		default:
-			printErrorAndExit(0);
+			printErrorAndExit();
 		}
 		return n;
 	}
@@ -120,23 +125,24 @@ public class LL1 {
 	 * F -> (E) | n
 	 */
 	private static int parseF() {
-		char temp = tokens[curr];
 		
+		char temp = tokens[curr];
 		int n, n2;
+		
 		if(temp == '(') {
 			curr++;
 			n = parseE();
 			if(tokens[curr] == ')') {
 				curr++;
 				return n;
-			}else if(tokens[curr] == '('){
+			}else if(tokens[curr] == '('){	// if there are multiple parentheses in a row
 				curr++;
-				return n + parseF();		// this may be a problem
+				return n + parseF();		// this continues the recursive parsing
 			}else{
 				printErrorAndExit(2);
 				return n;
 			}
-		} else {
+		} else {	// continues parsing the int until interrupted by a non-number
 			if(Character.isDigit(temp)){
 				boolean numberIsOver = false;
 				String fullNumber = "";
@@ -151,8 +157,8 @@ public class LL1 {
 					i++;
 				}
 				return Integer.parseInt(fullNumber);
-			} else{
-				printErrorAndExit(0);
+			} else{		// occurs if the symbol is neither ( nor an int
+				printErrorAndExit();
 			}
 		}
 		return -1;
@@ -171,7 +177,8 @@ public class LL1 {
 		System.out.println("Error!");
 		switch(errorNumber) {
 		case 1:
-			System.out.println("You must pass an argument into this program.\nExample: java LL1 100-((2*(5-3))-2)+3");
+			System.out.println("You must pass an argument into this program." +
+					"\nExample: java LL1 100-((2*(5-3))-2)+3");
 			break;
 		case 2:
 			System.out.println("Must close parentheses.");
@@ -182,5 +189,13 @@ public class LL1 {
 		}
 		System.out.println("Exiting.");
 		System.exit(-1);
+	}
+	
+	/*
+	 * No-args version of printErrorAndExit.
+	 * Prints a default error message and exits the program.
+	 */
+	private static void printErrorAndExit(){
+		printErrorAndExit(0);
 	}
 }
