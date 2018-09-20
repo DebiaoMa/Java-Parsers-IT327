@@ -37,6 +37,9 @@ public class LL1 {
 		if(args.length == 0) {
 			printErrorAndExit(1);
 		}else {
+                        String temp = args[0];
+                        temp = temp.replaceAll("\"", "");
+                        System.out.println(temp);
 			tokens = args[0].toCharArray();
 		}
 		
@@ -121,12 +124,12 @@ public class LL1 {
 			/* The following code checks concurrent symbols to make sure the full number is parsed
 			 * rather than only its leftmost digit.
 			 */
-			bool numberIsOver = false;
+			boolean numberIsOver = false;
 			String fullNumber = "" + temp;
 			while(!numberIsOver) {
 				int n = 1;
-				if(Character.isDigit(tokens[curr+n]){
-					fullNumber += tokens[curr+n]);
+				if(Character.isDigit(tokens[curr+n])){
+					fullNumber += tokens[curr+n];
 				}else {
 					numberIsOver = true;
 				}
@@ -148,7 +151,7 @@ public class LL1 {
 		case 1:
 			System.out.println("You must pass an argument into this program.\nExample: java LL1 100-((2*(5-3))-2)+3");
 		case 2: 
-			System.out.println("Invalid input. Problem cannot be parsed.")
+			System.out.println("Invalid input. Problem cannot be parsed.");
 		}
 		System.out.println("Exiting.");
 		System.exit(-1);
