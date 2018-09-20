@@ -34,13 +34,7 @@ public class LL1 {
             String temp = args[0];
             temp = temp.replaceAll("\"", "");	// removes quotation marks if present
             temp = temp + "$";
-            System.out.println("Temp = " + temp);
 			tokens = temp.toCharArray();
-			System.out.println("Length = " + tokens.length + "tokens = " + temp);
-		}
-		
-		for(int i = 0; i < tokens.length; i++){
-			System.out.println("Token at index " + i + " is " + tokens[i]);
 		}
 
 		int answer = parseE();
@@ -56,7 +50,6 @@ public class LL1 {
 	 * E -> TE'
 	 */
 	private static int parseE() {
-		System.out.println("Parsing E");
 		int n = parseT();
 		return parseEPrime(n);
 	}
@@ -65,19 +58,16 @@ public class LL1 {
 	 * E' -> +TE' | -TE' | lambda
 	 */
 	private static int parseEPrime(int n) {
-		System.out.println("Parsing E'");
 		
 		char temp = tokens[curr];
 		
 		int n2 = 0;
 		switch(temp){
 		case '+':
-			System.out.println("Found + at index " + curr);
 			curr++;
 			n2 = parseT();
 			return parseEPrime(n + n2);
 		case '-':
-			System.out.println("Found -");
 			curr++;
 			n2 = parseT();
 			return parseEPrime(n - n2);
@@ -94,7 +84,6 @@ public class LL1 {
 	 * T -> FT'
 	 */
 	private static int parseT() {
-		System.out.println("Parsing T");
 		int n = parseF();
 		return parseTPrime(n);
 	}
@@ -103,20 +92,16 @@ public class LL1 {
 	 * T' -> *FT' | /FT' | lambda
 	 */
 	private static int parseTPrime(int n) {
-		System.out.println("Parsing T'");
-		System.out.println("curr = " + curr + " size = " + tokens.length + " n = " + n);
 		
 		char temp = tokens[curr];
 		
 		int n2 = 0;
 		switch(temp){
 		case '*':
-			System.out.println("Found * at index " + curr);
 			curr++;
 			n2 = parseF();
 			return parseTPrime(n * n2);
 		case '/':
-			System.out.println("Found - at index " + curr);
 			curr++;
 			n2 = parseF();
 			return parseTPrime(n / n2);
@@ -126,7 +111,6 @@ public class LL1 {
 		case '$':
 			break;
 		default:
-			System.out.println("Error on ParseTPrime. n = " + n + " and n2 = " + n2);
 			printErrorAndExit(0);
 		}
 		return n;
@@ -136,24 +120,13 @@ public class LL1 {
 	 * F -> (E) | n
 	 */
 	private static int parseF() {
-		System.out.println("Parsing F");
-		
-//		char temp = '?';
-//		try{
-//			temp = tokens[curr];
-//		}catch(Exception e){
-//			printResultAndExit(-1);
-//		}
-		
 		char temp = tokens[curr];
 		
 		int n, n2;
 		if(temp == '(') {
-			System.out.println("Found ( at index " + curr);
 			curr++;
 			n = parseE();
 			if(tokens[curr] == ')') {
-				System.out.println("Found ) at index " + curr);
 				curr++;
 				return n;
 			}else if(tokens[curr] == '('){
@@ -165,7 +138,6 @@ public class LL1 {
 			}
 		} else {
 			if(Character.isDigit(temp)){
-				System.out.println("isDigit = true");
 				boolean numberIsOver = false;
 				String fullNumber = "";
 				int i = curr;
@@ -173,14 +145,11 @@ public class LL1 {
 					if(Character.isDigit(tokens[i])){
 							fullNumber += tokens[i];
 							curr++;
-							System.out.println(fullNumber);
 					}else{
 						numberIsOver = true;
 					}
 					i++;
 				}
-				System.out.println("Found " + fullNumber + " at index " + curr);
-				System.out.println("tokens[curr] = " + tokens[curr]);
 				return Integer.parseInt(fullNumber);
 			} else{
 				printErrorAndExit(0);
