@@ -28,11 +28,11 @@ public class LR1
 	
 	public static void main(String[] args)
 	{
-        stack = new Stack<String>();
-        input = token = "";
-        curr = 0;
-        state = -1;
-        complete = false;
+        	stack = new Stack<String>();
+        	input = token = "";
+        	curr = 0;
+        	state = -1;
+        	complete = false;
 
 		/*
 		 * Ends program if there are no args. 
@@ -43,8 +43,8 @@ public class LR1
 			printErrorAndExit(1);
 		
 		input = args[0];
-        input = input.replaceAll("\"", "");		// removes quotation marks
-        input = input + "$";					// adds end symbol
+        	input = input.replaceAll("\"", "");		// removes quotation marks
+        	input = input + "$";					// adds end symbol
 		push("0");
 		setToken();
 		
