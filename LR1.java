@@ -62,6 +62,10 @@ public class LR1
 		 * E.g. the E in the stack has value 317 at the end.
 		 */
 	}
+
+	public enum Symbol {
+		E, T, F, NUMBER, OTHER;
+	}
 	
 	class Nonterminal{
 		public char symbol;
