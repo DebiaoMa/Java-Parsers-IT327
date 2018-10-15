@@ -24,15 +24,15 @@ public class LR1
 	private static int curr;			// Current index in input.
 	private static int state;			// Current state of the parser.
 	private static boolean complete;	// If true, parsing is complete.
-	private static Stack<String> stack;	// Parsing stack.
+	private static Stack<ParsingItem> stack;	// Parsing stack.
 	
 	public static void main(String[] args)
 	{
-        	stack = new Stack<String>();
-        	input = token = "";
-        	curr = 0;
-        	state = -1;
-        	complete = false;
+    	stack = new Stack<ParsingItem>();
+    	input = token = "";
+    	curr = 0;
+    	state = -1;
+    	complete = false;
 
 		/*
 		 * Ends program if there are no args. 
@@ -62,33 +62,42 @@ public class LR1
 		 * E.g. the E in the stack has value 317 at the end.
 		 */
 	}
-
-	public enum Symbol {
-		E, T, F, NUMBER, OTHER;
-	}
 	
-	class Nonterminal{
-		public char symbol;
+	class ParsingItem{
+		public String symbol;
 		public int value;
+		public int state;
 		
-		Nonterminal(char symbol, int value){
+		Nonterminal(String symbol, int state, int value){
 			this.symbol = symbol;
+			this.state = state;
 			this.value = value;
+		}
+		
+		@Override
+		public String toString() {
+			return "[" + this.symbol + ":" + this.state + "]" + "=" + this.value +" ";
 		}
 	};
 	
-	private static String pop(){
-		String result =	stack.pop();
-		System.out.println("Popped: " + result + 
+	/**
+	* Pops ParsingItem from the stack and prints the status of the parser.
+	*/
+	private static ParsingItem pop(){
+		ParsingItem result = stack.pop().toString();
+		System.out.println("Popped: " + result.toString() + 
 				"\nStack:" + stack.toString() + 
 				"\nToken:" + token + 
 				"\nInput String: " + input.substring(curr) + "\n\n");
 		return result;
 	}
 	
-	private static void push(String s){
+	/**
+	* Pushes ParsingItem to the stack and prints the status of the parser.
+	*/
+	private static void push(ParsingItem s){
 		stack.push(s);
-		System.out.println("Pushed: " + s +
+		System.out.println("Pushed: " + s.toString() +
 				"\nStack:" + stack.toString() + 
 				"\nToken: " + token + 
 				"\nInput String: " + input.substring(curr) + "\n\n");
@@ -109,23 +118,18 @@ public class LR1
 		}
 	}
 	
+	// TODO: refactor this for ParsingItem use
 	private static void setToken(){
-		if(isNonterminal(input.charAt(curr)))
-		{
+		if(isNonterminal(input.charAt(curr))){
 			token = "" + input.charAt(curr);
 			curr++;
-		}
-		else if(Character.isDigit(input.charAt(curr)))
-		{
+		}else if(Character.isDigit(input.charAt(curr))){
 			token = "";
-			while(Character.isDigit(input.charAt(curr)))
-			{
+			while(Character.isDigit(input.charAt(curr))){
 				token += input.charAt(curr);
 				curr++;
 			}
-		}
-		else
-		{
+		}else{
 			printErrorAndExit();
 		}
 	}
@@ -136,11 +140,15 @@ public class LR1
 		return false;
 	}
 	
+	/**
+	 * Reads the state value of the next item on the stack and brings the parser
+	 * to the designated state number.
+	 */
 	private static void parse(){
-		String temp = stack.peek();
+		ParsingItem temp = stack.peek();
 		
-		if(Character.isDigit(temp.charAt(0)))
-			state = Integer.parseInt(temp);
+		if(temp.state != null)
+			state = temp.state;
 		else
 			state = -1;
 		
@@ -189,58 +197,60 @@ public class LR1
 	
 	private static void pushE(){
         // E -> E + T | E - T | T
-		String temp = stack.peek();
-
-		push("E");
+		ParsingItem item = new ParsingItem("E", null, null);
 		
-		if(temp.equals("0"))
-			push("1");
-		else if(temp.equals("4"))
-			push("8");
+		if(state == 0)
+			item.state = 0;
+		else if(state == 4)
+			item.state = 8;
 		else
 			printErrorAndExit();
+		
+		push(item);
 	}
 	
 	private static void pushT(){
         // T -> T * F | T / F | F
-		String temp = stack.peek();
-
-		push("T");
+		ParsingItem item = new ParsingItem("T", null, null);
 		
-		if(temp.equals("0") || temp.equals("4"))
-			push("2");
-		else if(temp.equals("6"))
-			push("9");
+		if(state == 0 || state == 4)
+			item.state = 2;
+		else if(state == 6)
+			item.state = 9;
 		else
 			printErrorAndExit();
+		
+		push(item);
 	}
 	
 	private static void pushF(){
         // F -> (E)   | n		(where n is any positive integer)
-		String temp = stack.peek();
-
-		push("F");
+		ParsingItem item = new ParsingItem("F", null, null);
 		
-		if(temp.equals("0") || temp.equals("4") || temp.equals("6"))
-			push("3");
+		if(state == 0 || state == 4 || state == 6)
+			item.state = 3;
 		else if(temp.equals("7"))
-			push("10");
+			item.state = 10;
 		else
 			printErrorAndExit();
+		
+		push(item);
 	}
 	
+	// TODO: will refactoring work like this????
 	private static void state0(){
 		char temp = token.charAt(0);
+		ParsingItem item = new ParsingItem();
 		
 		if(Character.isDigit(temp)){
+			item.symbol = token;
+			item.state = 5;
 			//shift 5
-			push(token);
-			push("5");
 			setToken();
 		}else if(temp == '('){
+			item.symbol = "(";
+			item.state = 4;
 			//shift 4
-			push(token);
-			push("4");
 			setToken();
 		}else{
 			printErrorAndExit();
@@ -265,6 +275,7 @@ public class LR1
 				break;
 			case '$':
 				complete = true;
+				System.out.println("Accepted! Answer = " + stack.peek().value);
 				break;
 			default:
 				printErrorAndExit();
