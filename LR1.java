@@ -8,6 +8,33 @@
 
 import java.util.Stack;
 
+/**
+ * Data structure that contains a symbol,
+ * the state it will take the parser to,
+ * and its value (if applicable).
+ */
+class ParsingItem{
+	public String symbol;
+	public int state;
+	public int value;
+	public boolean hasValue;	// Prevents default value from being used in math.
+	
+	public ParsingItem(String symbol, int state, int value, boolean hasValue){
+		this.symbol = symbol;
+		this.state = state;
+		this.value = value;
+		this.hasValue = hasValue;
+	}
+	
+	@Override
+	public String toString() {
+		if(hasValue)
+			return "[" + this.symbol + ":" + this.state + "]" + "=" + this.value;
+		else
+			return "[" + this.symbol + ":" + this.state + "]";
+	}
+};
+
 /*
  * Grammar:
  * E -> E + T | E - T | T
@@ -20,9 +47,9 @@ public class LR1
 	 * Declarations
 	 */
 	private static String input;		// String containing user input.
-	private static String token;		// Current token.
+	private static String token;		// Current token from the input.
 	private static int curr;			// Current index in input.
-	private static int state;			// Current state of the parser.
+	// private static int state;			// Current state of the parser.
 	private static boolean complete;	// If true, parsing is complete.
 	private static Stack<ParsingItem> stack;	// Parsing stack.
 	
@@ -31,7 +58,7 @@ public class LR1
     	stack = new Stack<ParsingItem>();
     	input = token = "";
     	curr = 0;
-    	state = -1;
+    	// state = 0;
     	complete = false;
 
 		/*
@@ -43,18 +70,18 @@ public class LR1
 			printErrorAndExit(1);
 		
 		input = args[0];
-        	input = input.replaceAll("\"", "");		// removes quotation marks
-        	input = input + "$";					// adds end symbol
-		push("0");
+        input = input.replaceAll("\"", "");		// removes quotation marks
+        input = input + "$";					// adds end symbol
+        
+		
+        push(new ParsingItem("-", 0, 0, false));
 		setToken();
 		
 		while(!complete)
 			parse();
 		
-		// TODO print answer
-		// TODO add math logic
-		// TODO make Nonterminal object hold values of nonterminals (see assignment pdf)
-				// should I make the stack a stack of nonterminals with values, then print the value of E at the end?
+		System.out.println("Success! Answer = " + stack.peek().value);
+		
 		/*
 		 * Whenever the parser obtains a nonterminal symbol from some reduction, 
 		 * its value should be computed. Thus you may design a certain data structure 
@@ -63,32 +90,23 @@ public class LR1
 		 */
 	}
 	
-	class ParsingItem{
-		public String symbol;
-		public int value;
-		public int state;
-		
-		Nonterminal(String symbol, int state, int value){
-			this.symbol = symbol;
-			this.state = state;
-			this.value = value;
-		}
-		
-		@Override
-		public String toString() {
-			return "[" + this.symbol + ":" + this.state + "]" + "=" + this.value +" ";
-		}
-	};
+	/**
+	 * Convenience method to get current state.
+	 */
+	private static int getState(){
+		return stack.peek().state;
+	}
 	
 	/**
 	* Pops ParsingItem from the stack and prints the status of the parser.
 	*/
 	private static ParsingItem pop(){
-		ParsingItem result = stack.pop().toString();
-		System.out.println("Popped: " + result.toString() + 
+		ParsingItem result = stack.pop();
+		System.out.println("Popped:" + result.toString() + 
 				"\nStack:" + stack.toString() + 
 				"\nToken:" + token + 
-				"\nInput String: " + input.substring(curr) + "\n\n");
+				"\nInput String:" + input.substring(curr) + 
+				"\nState:" + getState() + "\n");
 		return result;
 	}
 	
@@ -97,10 +115,11 @@ public class LR1
 	*/
 	private static void push(ParsingItem s){
 		stack.push(s);
-		System.out.println("Pushed: " + s.toString() +
+		System.out.println("Pushed:" + s.toString() +
 				"\nStack:" + stack.toString() + 
-				"\nToken: " + token + 
-				"\nInput String: " + input.substring(curr) + "\n\n");
+				"\nToken:" + token + 
+				"\nInput String:" + input.substring(curr) + 
+				"\nState:" + getState() + "\n");
 	}
 	
 	private static boolean isNonterminal(char c){
@@ -118,41 +137,49 @@ public class LR1
 		}
 	}
 	
-	// TODO: refactor this for ParsingItem use
+	/**
+	 * Retrieves the next token from the input String and assigns
+	 * variable "token" to it. In the case of an integer, it will
+	 * iterate through the string until it has the full number.
+	 */
 	private static void setToken(){
-		if(isNonterminal(input.charAt(curr))){
-			token = "" + input.charAt(curr);
-			curr++;
-		}else if(Character.isDigit(input.charAt(curr))){
-			token = "";
-			while(Character.isDigit(input.charAt(curr))){
-				token += input.charAt(curr);
+		try{
+			if(isNonterminal(input.charAt(curr))){
+				token = "" + input.charAt(curr);
 				curr++;
+			}else if(Character.isDigit(input.charAt(curr))){
+				boolean numberIsOver = false;
+				String fullNumber = "";
+				int i = curr;
+				while(!numberIsOver && input.length() > i){
+					if(Character.isDigit(input.charAt(i))){
+						fullNumber += input.charAt(i);
+						curr++;
+					}else{
+						numberIsOver = true;
+					}
+					i++;
+				}
+				token = fullNumber;
+			}else if(input.charAt(curr) == '$'){
+				
+			}else{
+				printErrorAndExit();
 			}
-		}else{
-			printErrorAndExit();
+		}catch(StringIndexOutOfBoundsException e){
+			
 		}
-	}
-	
-	private static boolean tokenIs(char c){
-		if(token.charAt(0)==c)
-			return true;
-		return false;
+		
+		token.replaceAll(" ", "");
+		System.out.println("Set token to=" + token + " at " + getState());
 	}
 	
 	/**
-	 * Reads the state value of the next item on the stack and brings the parser
+	 * Reads the state of the next item on the stack and brings the parser
 	 * to the designated state number.
 	 */
 	private static void parse(){
-		ParsingItem temp = stack.peek();
-		
-		if(temp.state != null)
-			state = temp.state;
-		else
-			state = -1;
-		
-		switch(state)
+		switch(getState())
 		{
 			case 0:
 				state0();
@@ -195,312 +222,232 @@ public class LR1
 		}
 	}
 	
-	private static void pushE(){
-        // E -> E + T | E - T | T
-		ParsingItem item = new ParsingItem("E", null, null);
-		
-		if(state == 0)
-			item.state = 0;
-		else if(state == 4)
-			item.state = 8;
+	/**
+	 * E -> E + T | E - T | T
+	 */
+	private static void pushE(int itemValue, boolean hasValue){
+		String symbol = "E";
+		int itemState = -1;
+		int currState = stack.peek().state;
+		if(currState == 0)
+			itemState = 1;
+		else if(currState == 4)
+			itemState = 8;
 		else
 			printErrorAndExit();
 		
-		push(item);
+		push(new ParsingItem(symbol, itemState, itemValue, hasValue));
 	}
 	
-	private static void pushT(){
-        // T -> T * F | T / F | F
-		ParsingItem item = new ParsingItem("T", null, null);
+	/**
+	 * T -> T * F | T / F | F
+	 */
+	private static void pushT(int itemValue, boolean hasValue){
+		String symbol = "T";
+		int itemState = -1;
+		int currState = stack.peek().state;
 		
-		if(state == 0 || state == 4)
-			item.state = 2;
-		else if(state == 6)
-			item.state = 9;
+		if(currState == 0 || currState == 4)
+			itemState = 2;
+		else if(currState == 6)
+			itemState = 9;
 		else
 			printErrorAndExit();
 		
-		push(item);
+		push(new ParsingItem(symbol, itemState, itemValue, hasValue));
 	}
 	
-	private static void pushF(){
-        // F -> (E)   | n		(where n is any positive integer)
-		ParsingItem item = new ParsingItem("F", null, null);
+	/**
+	 * F -> (E)   | n		(where n is any positive integer)
+	 */
+	private static void pushF(int itemValue, boolean hasValue){
+		String symbol = "F";
+		int itemState = -1;
+		int currState = stack.peek().state;
 		
-		if(state == 0 || state == 4 || state == 6)
-			item.state = 3;
-		else if(temp.equals("7"))
-			item.state = 10;
+		if(currState == 0 || currState == 4 || currState == 6)
+			itemState = 3;
+		else if(currState == 7)
+			itemState = 10;
 		else
 			printErrorAndExit();
 		
-		push(item);
+		push(new ParsingItem(symbol, itemState, itemValue, hasValue));
 	}
 	
-	// TODO: will refactoring work like this????
+	/**
+	 * If token == n then shift 5.
+	 * If token == ( then shift 4.
+	 */
 	private static void state0(){
 		char temp = token.charAt(0);
-		ParsingItem item = new ParsingItem();
 		
 		if(Character.isDigit(temp)){
-			item.symbol = token;
-			item.state = 5;
-			//shift 5
-			setToken();
+			push(new ParsingItem("n", 5, Integer.parseInt(token), true));
 		}else if(temp == '('){
-			item.symbol = "(";
-			item.state = 4;
-			//shift 4
-			setToken();
+			push(new ParsingItem("(", 4, 0, false));
 		}else{
 			printErrorAndExit();
 		}
+		
+		setToken();
 	}
 	
+	/**
+	 * If token == + or - then shift 6.
+	 * If token == $ then complete = true.
+	 */
 	private static void state1(){
 		char temp = token.charAt(0);
 		
 		switch(temp){
 			case '+':
-				//shift 6
-				push(token);
-				push("6");
-				setToken();
-				break;
 			case '-':
-				//shift 6
-				push(token);
-				push("6");
-				setToken();
+				push(new ParsingItem(token, 6, 0, false));
 				break;
 			case '$':
 				complete = true;
-				System.out.println("Accepted! Answer = " + stack.peek().value);
 				break;
 			default:
 				printErrorAndExit();
 		}
+		
+		if(temp != '$')
+			setToken();
 	}
 	
+	/**
+	 * If token == + or - or ) or $ then E->T.
+	 * If token == * or / then shift 7.
+	 */
 	private static void state2(){
 		char temp = token.charAt(0);
 		
 		switch(temp){
 			case '+':
-				//E->T
-				pop();
-				if(pop().charAt(0)!='T'){
-					printErrorAndExit();
-				}
-				pushE();
-				break;
 			case '-':
-				//E->T
-				pop();
-				if(pop().charAt(0)!='T'){
-					printErrorAndExit();
-				}
-				pushE();
-				break;
-			case '*':
-				//shift 7
-				push(token);
-				push("7");
-				setToken();
-				break;
-			case '/':
-				//shift 7
-				push(token);
-				push("7");
-				setToken();
-				break;
 			case ')':
 			case '$':
-				//E->T
-				pop();
-				if(pop().charAt(0)!='T'){
-					printErrorAndExit();
-				}
-				pushE();
+				ParsingItem T = pop();
+				pushE(T.value, T.hasValue);
+				break;
+			case '*':
+			case '/':
+				push(new ParsingItem(token, 7, 0, false));
+				setToken();
 				break;
 			default:
 				printErrorAndExit();
 		}
 	}
 	
+	/**
+	 * If token == + or - or * or / or ) or $ then T->F.
+	 */
 	private static void state3(){
 		char temp = token.charAt(0);
 		
 		switch(temp){
 			case '+':
-				//T->F
-				pop();
-				if(pop().charAt(0)!='F')
-					printErrorAndExit();
-				pushT();
-				break;
 			case '-':
-				//T->F
-				pop();
-				if(pop().charAt(0)!='F')
-					printErrorAndExit();
-				pushT();
-				break;
 			case '*':
-				//T->F
-				pop();
-				if(pop().charAt(0)!='F')
-					printErrorAndExit();
-				pushT();
-				break;
 			case '/':
-				//T->F
-				pop();
-				if(pop().charAt(0)!='F')
-					printErrorAndExit();
-				pushT();
-				break;
 			case ')':
 			case '$':
-				//T->F
-				pop();
-				if(pop().charAt(0)!='F')
-					printErrorAndExit();
-				pushT();
+				ParsingItem F = pop();
+				pushT(F.value, F.hasValue);
 				break;
 			default:
 				printErrorAndExit();
 		}
+		
+		// setToken();
 	}
 	
+	/**
+	 * If token == n then shift 5.
+	 * If token == ( then shift 4.
+	 */
 	private static void state4(){
 		char temp = token.charAt(0);
 		
 		if(Character.isDigit(temp)){
-			//shift 5
-			push(token);
-			push("5");
-			setToken();
+			push(new ParsingItem("n", 5, Integer.parseInt(token), true));
 		}else if(temp == '('){
-			//shift 4
-			push(token);
-			push("4");
-			setToken();
-		}else
+			push(new ParsingItem("(", 4, 0, false));
+		}else{
 			printErrorAndExit();
+		}
+		
+		// setToken(); //TODO
 	}
 	
+	/**
+	 * If token == + or - or * or / or ) or $ then calculate value of F and push it.
+	 */
 	private static void state5(){
 		char temp = token.charAt(0);
+		if(Character.isDigit(temp)){
+			setToken();
+			temp = token.charAt(0);
+		}
 		
 		switch(temp){
 			case '+':
-				//F->n
-				pop();
-				if(!Character.isDigit(pop().charAt(0)))
-				{
-					printErrorAndExit();
-				}
-				pushF();
-				break;
 			case '-':
-				//F->n
-				pop();
-				if(!Character.isDigit(pop().charAt(0)))
-				{
-					printErrorAndExit();
-				}
-				pushF();
-				break;
 			case '*':
-				//F->n
-				pop();
-				if(!Character.isDigit(pop().charAt(0)))
-				{
-					printErrorAndExit();
-				}
-				pushF();
-				break;
 			case '/':
-				//F->n
-				pop();
-				if(!Character.isDigit(pop().charAt(0)))
-				{
-					printErrorAndExit();
-				}
-				pushF();
-				break;
 			case ')':
 			case '$':
-				//F->n
-				pop();
-				if(!Character.isDigit(pop().charAt(0)))
-				{
-					printErrorAndExit();
-				}
-				pushF();
+				ParsingItem n = pop();
+				pushF(n.value, n.hasValue);
 				break;
 			default:
 				printErrorAndExit();
 		}
 	}
 	
+	/**
+	 * If token == n then shift 5.
+	 * If token == ( then shift 4.
+	 */
 	private static void state6(){
 		char temp = token.charAt(0);
-		
 		if(Character.isDigit(temp)){
-			//shift 5
-			push(token);
-			push("5");
-			setToken();
+			push(new ParsingItem("n", 5, Integer.parseInt(token), true));
 		}else if(temp == '('){
-			//shift 4
-			push(token);
-			push("4");
-			setToken();
+			push(new ParsingItem("(", 4, 0, false));
 		}else{
 			printErrorAndExit();
 		}
+		
+		if(temp != '$')
+			setToken();
 	}
 	
+	/**
+	 * If token == n then shift 5.
+	 * If token == ( then shift 4.
+	 */
 	private static void state7(){
-		char temp = token.charAt(0);
-		
-		if(Character.isDigit(temp)){
-			//shift 5
-			push(token);
-			push("5");
-			setToken();
-		}else if(temp == '('){
-			//shift 4
-			push(token);
-			push("4");
-			setToken();
-		}else{
-			printErrorAndExit();
-		}
+		state6();		
+		// for my implementation these methods are identical
 	}
 	
+	/**
+	 * If token == + or - then shift 6.
+	 * If token == ) then shift 11.
+	 */
 	private static void state8(){
 		char temp = token.charAt(0);
-		
 		switch(temp){
 			case '+':
-				//shift 6
-				push(token);
-				push("6");
-				setToken();
-				break;
 			case '-':
-				//shift 6
-				push(token);
-				push("6");
+				push(new ParsingItem(token, 6, 0, false));
 				setToken();
 				break;
 			case ')':
-				//shift 11
-				push(token);
-				push("11");
+				push(new ParsingItem(token, 11, 0, false));
 				setToken();
 				break;
 			default:
@@ -508,65 +455,77 @@ public class LR1
 		}
 	}
 	
-	// TODO
+	/**
+	 * If token == * or / then shift 7.
+	 * If token == + or - or ) or $ 
+	 * then perform addition or subtraction
+	 * and push resulting E to stack.
+	 */
 	private static void state9(){
-		if(tokenIs('+') || tokenIs(')') || tokenIs('$'))
-		{
-			//E->E+T
-			pop();
-			if(pop().charAt(0)!='T')
-			{
+		char temp = token.charAt(0);
+		
+		int E, T, result = 0;
+		char operator;
+		
+		switch(temp){
+			case '*':
+			case '/':
+				push(new ParsingItem(token, 7, 0, false));
+				setToken();
+				break;
+			case '+':
+			case '-':
+			case ')':
+			case '$':
+				T = pop().value;
+				operator = pop().symbol.charAt(0);
+				E = pop().value;
+				
+				if(operator == '+')
+					result = E + T;
+				else if(operator == '-')
+					result = E - T;
+				
+				pushE(result, true);
+				break;
+			default:
 				printErrorAndExit();
-			}
-			pop();
-			if(pop().charAt(0)!='+')
-			{
-				printErrorAndExit();
-			}
-			pop();
-			if(pop().charAt(0)!='E')
-			{
-				printErrorAndExit();
-			}
-			pushE();
 		}
-		else if(tokenIs('*'))
-		{
-			//shift 7
-			push(token);
-			push("7");
-			setToken();
-		}
-		else
-			printErrorAndExit();
+		
+//		if(temp != '$')
+//			setToken();
 	}
 	
-	// TODO
+	/**
+	 * If token == + or - or * or / or ) or $ 
+	 * then perform multiplication or division 
+	 * and push resulting T to stack.
+	 */
 	private static void state10(){
-		if(tokenIs('+') || tokenIs('*') || tokenIs(')') || tokenIs('$'))
-		{
-			//T->T*F
-			pop();
-			if(pop().charAt(0)!='F')
-			{
-				printErrorAndExit();
-			}
-			pop();
-			if(pop().charAt(0)!='*')
-			{
-				printErrorAndExit();
-			}
-			pop();
-			if(pop().charAt(0)!='T')
-			{
-				printErrorAndExit();
-			}
-			pushT();
-		}
-		else
+		char temp = token.charAt(0);
+		int F = pop().value;
+		char operator = pop().symbol.charAt(0);
+		int T = pop().value;
+		int result = 0;
+		
+		if(operator == '*'){
+			result = F * T;
+		}else if(operator == '/'){
+			result = F / T;
+		}else{
 			printErrorAndExit();
+		}
+		
+		pushT(result, true);
+		
+		if(temp != '$')
+			setToken();
 	}
 	
+	/**
+	 * If token == + or - or * or / or ) or $
+	 * then find value in parentheses and push it as F.
+	 */
 	private static void state11(){
 		char temp = token.charAt(0);
 		
@@ -578,26 +537,27 @@ public class LR1
 			case ')':
 			case '$':
 				//F->(E)
-				pop();
-				if(pop().charAt(0)!=')')
+				if(pop().symbol.charAt(0)!=')')
+				{
+					printErrorAndExit(2);
+				}
+				ParsingItem E = pop();
+				if(E.symbol.charAt(0)!='E')
 				{
 					printErrorAndExit();
 				}
-				pop();
-				if(pop().charAt(0)!='E')
+				if(pop().symbol.charAt(0)!='(')
 				{
 					printErrorAndExit();
 				}
-				pop();
-				if(pop().charAt(0)!='(')
-				{
-					printErrorAndExit();
-				}
-				pushF();
+				pushF(E.value, true);
 				break;
 			default:
 				printErrorAndExit();
 		}
+		
+		if(temp != '$')
+			setToken();
 	}
 	
 	/**
