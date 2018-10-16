@@ -49,7 +49,6 @@ public class LR1
 	private static String input;		// String containing user input.
 	private static String token;		// Current token from the input.
 	private static int curr;			// Current index in input.
-	// private static int state;			// Current state of the parser.
 	private static boolean complete;	// If true, parsing is complete.
 	private static Stack<ParsingItem> stack;	// Parsing stack.
 	
@@ -58,7 +57,6 @@ public class LR1
     	stack = new Stack<ParsingItem>();
     	input = token = "";
     	curr = 0;
-    	// state = 0;
     	complete = false;
 
 		/*
@@ -360,8 +358,6 @@ public class LR1
 			default:
 				printErrorAndExit();
 		}
-		
-		// setToken();
 	}
 	
 	/**
@@ -378,8 +374,6 @@ public class LR1
 		}else{
 			printErrorAndExit();
 		}
-		
-		// setToken(); //TODO
 	}
 	
 	/**
@@ -491,9 +485,6 @@ public class LR1
 			default:
 				printErrorAndExit();
 		}
-		
-//		if(temp != '$')
-//			setToken();
 	}
 	
 	/**
